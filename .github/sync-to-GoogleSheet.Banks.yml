@@ -1,0 +1,13 @@
+#.github/sync-to-GoogleSheet.Banks.yml
+# GoogleSheet.Banks/fugle_stock_advisor.py --pre-market 開盤前簡報用：
+# 台指期夜盤 vs 日盤收盤、外資期貨淨未平倉。
+group:
+  - files:
+      - source: data/raw_taifex_daily_futures.csv
+        dest:   data/TAIFEX/raw_taifex_daily_futures.csv
+      - source: data/raw_taifex_institutional_futures.csv
+        dest:   data/TAIFEX/raw_taifex_institutional_futures.csv
+      - source: raw_column_definition_TAIFEX.md
+        dest:   definitions/raw_column_definition_TAIFEX.md
+    repos: |
+        WJLEE1020/GoogleSheet.Banks

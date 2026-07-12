@@ -1,0 +1,4 @@
+﻿Date,Item,TradingVolume(Long),TradingValue(Long)(Millions),TradingVolume(Short),TradingValue(Short)(Millions),TradingVolume(Net),TradingValue(Net)(Millions),OpenInterest(Long),ContractValueOfOpenInterest(Long)(Millions),OpenInterest(Short),ContractValueOfOpenInterest(Short)(Millions),OpenInterest(Net),ContractValueOfOpenInterest(Net)(Millions),download_timestamp,process_timestamp
+20260709,外資及陸資,1140331,1708338,1144041,1699119,-3710,9219,259724,245890,837405,1238380,-577681,-992490,2026-07-12 09:37:53,2026-07-12 09:37:53
+20260709,投信,8399,68984,6823,52970,1576,16014,92729,722013,8322,55360,84407,666653,2026-07-12 09:37:53,2026-07-12 09:37:53
+20260709,自營商,255235,159825,247721,165651,7514,-5826,185289,117290,579466,355110,-394177,-237820,2026-07-12 09:37:53,2026-07-12 09:37:53

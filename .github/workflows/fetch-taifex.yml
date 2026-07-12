@@ -1,0 +1,78 @@
+name: Fetch TAIFEX Data
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 台北 05:30（21:30 UTC）：夜盤 05:00 收盤後抓每日行情（含盤後時段）
+    - cron: "30 21 * * *"
+    # 台北 15:30（07:30 UTC）：三大法人 ~15:00 公布後抓法人資料（順便再抓一次行情）
+    - cron: "30 7 * * *"
+
+concurrency:
+  group: fetch-taifex
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      SYNC_PAT_GSBANKS: ${{ secrets.REPO_FILE_SYNC_WJLEE1020_MONEY }}
+      SYNC_PAT_BIZTRENDS: ${{ secrets.REPO_FILE_SYNC_WENCHIEHLEE_MONEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Fetch daily futures (incl. after-hours session)
+        run: python fetch_group/fetch_daily_futures.py
+
+      - name: Fetch institutional traders data
+        run: python fetch_group/fetch_institutional.py
+        continue-on-error: true
+
+      - name: Commit data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/
+          if git diff --staged --quiet; then
+            echo "No data changes to commit"
+          else
+            git commit -m "chore: update TAIFEX data ($(date -u +%Y-%m-%d))"
+            git pull --rebase
+            git push
+          fi
+
+      - name: Sync to GoogleSheet.Banks
+        if: env.SYNC_PAT_GSBANKS != ''
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: ${{ env.SYNC_PAT_GSBANKS }}
+          CONFIG_PATH: .github/sync-to-GoogleSheet.Banks.yml
+          COMMIT_EACH_FILE: false
+          PR_LABELS: "automated-sync"
+          SKIP_PR: true
+
+      - name: Sync to biztrends.TW
+        if: env.SYNC_PAT_BIZTRENDS != ''
+        continue-on-error: true
+        uses: BetaHuhn/repo-file-sync-action@v1
+        with:
+          GH_PAT: ${{ env.SYNC_PAT_BIZTRENDS }}
+          CONFIG_PATH: .github/sync-to-biztrends.yml
+          COMMIT_EACH_FILE: false
+          PR_LABELS: "automated-sync"
+          SKIP_PR: true
+
+      - name: Sync skip notices
+        run: |
+          if [ -z "$SYNC_PAT_GSBANKS" ]; then
+            echo "::warning::REPO_FILE_SYNC_WJLEE1020_MONEY not configured; skipping GoogleSheet.Banks sync."
+          fi
+          if [ -z "$SYNC_PAT_BIZTRENDS" ]; then
+            echo "::warning::REPO_FILE_SYNC_WENCHIEHLEE_MONEY not configured; skipping biztrends.TW sync."
+          fi
