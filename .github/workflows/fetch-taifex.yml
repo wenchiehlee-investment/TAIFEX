@@ -19,7 +19,7 @@ jobs:
       contents: write
     env:
       SYNC_PAT_GSBANKS: ${{ secrets.REPO_FILE_SYNC_WJLEE1020_MONEY }}
-      SYNC_PAT_BIZTRENDS: ${{ secrets.REPO_FILE_SYNC_WENCHIEHLEE_MONEY }}
+      SYNC_PAT_BIZTRENDS: ${{ secrets.REPO_FILE_SYNC_WENCHIEHLEE_MONEY1 }}
     steps:
       - uses: actions/checkout@v4
 
@@ -74,5 +74,5 @@ jobs:
             echo "::warning::REPO_FILE_SYNC_WJLEE1020_MONEY not configured; skipping GoogleSheet.Banks sync."
           fi
           if [ -z "$SYNC_PAT_BIZTRENDS" ]; then
-            echo "::warning::REPO_FILE_SYNC_WENCHIEHLEE_MONEY not configured; skipping biztrends.TW sync."
+            echo "::warning::REPO_FILE_SYNC_WENCHIEHLEE_MONEY1 not configured; skipping biztrends.TW sync."
           fi
