@@ -6,7 +6,8 @@
 - data/raw_taifex_institutional_general.csv：市場整體（全部契約合計，依交易人類別）
 
 OpenAPI 只回傳最新一個交易日、無歷史查詢——「從現在開始累積」，每天排程抓、去重追加。
-時間戳慣例：UTC、無時區後綴（跟 Yahoo.Finance repo 一致）。
+時間戳慣例：台北時間、帶「 CST」後綴（跟 GoodInfo/ConceptStocks 一致，見
+fetch_daily_futures.py 的說明）。
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ import csv
 import json
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -78,7 +79,7 @@ def append_dedup(url, out_csv, key_cols, ts):
 
 
 def main():
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    ts = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S CST")
     for url, out_csv, key_cols in SOURCES:
         append_dedup(url, out_csv, key_cols, ts)
 

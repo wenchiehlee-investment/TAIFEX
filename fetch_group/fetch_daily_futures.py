@@ -10,8 +10,9 @@ OpenAPI（https://openapi.taifex.com.tw）只回傳最新一個交易日、無�
 是「從現在開始累積」的管線：每天排程抓一次、依 (Date, Contract, ContractMonth(Week),
 TradingSession) 去重後追加，舊列永不改寫。歷史回填要另外爬官網查詢表單，列為後續增強。
 
-時間戳慣例：UTC、無時區後綴（跟 Yahoo.Finance repo 一致；GoogleSheet.Banks 的
-資料新鮮度檢查以「無後綴＝UTC」解析）。
+時間戳慣例：台北時間、帶「 CST」後綴（跟 GoodInfo/ConceptStocks 一致）——
+GoogleSheet.Banks 與 biztrends.TW 的新鮮度檢查都認得 CST 後綴；無後綴的舊列
+GoogleSheet.Banks 當 UTC、biztrends.TW 當 CST，會差 8 小時，所以新列一律標明。
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ import csv
 import json
 import sys
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.stdout.reconfigure(encoding="utf-8")
@@ -46,7 +47,7 @@ def fetch_api(url):
 
 
 def main():
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    ts = datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S CST")
     data = fetch_api(API_URL)
     print(f"OpenAPI 回傳 {len(data)} 列（日期 {sorted({r.get('Date') for r in data})}）")
 
