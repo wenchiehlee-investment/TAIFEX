@@ -12,6 +12,7 @@ fetch_daily_futures.py 的說明）。
 from __future__ import annotations
 
 import csv
+import io
 import json
 import sys
 import urllib.request
@@ -37,13 +38,40 @@ SOURCES = [
 
 
 def fetch_api(url):
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as resp:
-        return json.load(resp)
+        raw = resp.read().decode("utf-8-sig")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        # Some endpoints (e.g. ...GeneralBytheDate, since 2026-11) answer with a
+        # Chinese-header CSV instead of JSON. Return rows keyed by those headers and
+        # flag them so append_dedup maps them onto the existing English columns.
+        rows = list(csv.reader(io.StringIO(raw)))
+        if len(rows) < 2:
+            return []
+        header = [h.strip() for h in rows[0]]
+        return [{"__csv_header__": header, "__csv_values__": r} for r in rows[1:] if any(c.strip() for c in r)]
+
+
+def normalize_csv_rows(data, out_csv):
+    """Map Chinese-header CSV rows positionally onto the existing file's English columns."""
+    if not data or "__csv_header__" not in data[0]:
+        return data
+    header = data[0]["__csv_header__"]
+    if not out_csv.exists():
+        raise SystemExit(f"{out_csv.name}: API returned CSV and there is no existing file to map columns from")
+    with open(out_csv, encoding="utf-8-sig", newline="") as f:
+        existing = next(csv.reader(f))
+    target = [c for c in existing if c not in ("download_timestamp", "process_timestamp")]
+    if len(target) != len(header):
+        raise SystemExit(f"{out_csv.name}: CSV has {len(header)} columns {header}, existing file has {len(target)} {target}; refusing to guess")
+    print(f"{out_csv.name}: API 回傳 CSV（中文欄名），依欄位順序對應到既有英文欄名")
+    return [dict(zip(target, [v.strip() for v in d["__csv_values__"]])) for d in data]
 
 
 def append_dedup(url, out_csv, key_cols, ts):
-    data = fetch_api(url)
+    data = normalize_csv_rows(fetch_api(url), out_csv)
     if not data:
         print(f"{out_csv.name}: API 回傳空，跳過")
         return
